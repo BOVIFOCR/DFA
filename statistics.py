@@ -1,7 +1,7 @@
 import math
 import numpy as np
 from sklearn.metrics import roc_curve, accuracy_score
-from sklearn.metrics import roc_auc_score
+# from sklearn.metrics import roc_auc_score
 
 class PADMeter(object):
     """Presentation Attack Detection Meter"""
@@ -81,7 +81,7 @@ class PADMeter(object):
         self.bpcer = frr
         self.acer = (self.apcer + self.bpcer) /2.0
         self.hter = (far + frr) / 2.0
-        self.auc = roc_auc_score(self.label, self.output)
+        # self.auc = roc_auc_score(self.label, self.output)
 
 
     def get_accuracy(self,thr=None):

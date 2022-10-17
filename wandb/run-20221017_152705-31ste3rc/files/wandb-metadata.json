@@ -1,0 +1,27 @@
+{
+    "os": "Linux-5.15.0-46-generic-x86_64-with-glibc2.31",
+    "python": "3.9.13",
+    "heartbeatAt": "2022-10-17T18:27:05.610958",
+    "startedAt": "2022-10-17T18:27:05.511561",
+    "docker": null,
+    "gpu": "NVIDIA GeForce RTX 3060",
+    "gpu_count": 2,
+    "cpu_count": 32,
+    "cuda": null,
+    "args": [
+        "--gpu_ids",
+        "0"
+    ],
+    "state": "running",
+    "program": "/home/rgpa18/DFA/main.py",
+    "codePath": "main.py",
+    "git": {
+        "remote": "git@github.com:UNICO-UFPR/DFA.git",
+        "commit": "971c36d32dd98dfead6cd35bd2b3443246742e3b"
+    },
+    "email": "rgpa18@inf.ufpr.br",
+    "root": "/home/rgpa18/DFA",
+    "host": "duo",
+    "username": "rgpa18",
+    "executable": "/conda/anaconda3/envs/rgpa18_dfa/bin/python3"
+}

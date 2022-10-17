@@ -2,6 +2,7 @@ import networks
 import losses
 import torch
 from torch import nn
+from torchvision import transforms as T
 import os
 import itertools
 from collections import OrderedDict
@@ -49,11 +50,22 @@ class FaceModel(nn.Module):
                                                                     self.netClassifier.parameters()),lr=opt.lr, betas=(opt.beta1, 0.999),weight_decay=0.01)
 
     def set_input(self,input):
+        face = input[0]
+        depth = input[2]
+        res32 = T.Resize((32,32))
+        res256 = T.Resize((256,256))
+        self.real_A = res256(face).to(self.device)
+        self.real_A_32 = res32(face).to(self.device)
+        self.real_B = res32(depth).to(self.device)
+        self.label = input[4].long().to(self.device)
+        self.image_path = "/dev/null"
+        """
         self.real_A = input['A'].to(self.device)
         self.real_A_32 = input['A_32'].to(self.device)
         self.real_B = input['B'].to(self.device)
         self.label = torch.tensor(input['label']).to(self.device)
         self.image_path = input['A_paths']
+        """
 
     def forward(self):
         self.lantent_0,self.lantent_1 = self.netEncoder(self.real_A)

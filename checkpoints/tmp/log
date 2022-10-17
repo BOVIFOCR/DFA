@@ -1,0 +1,6 @@
+2022-10-17 15:48:07,025 - /home/rgpa18/.local/lib/python3.9/site-packages/git/cmd.py[line:870] - DEBUG: Popen(['git', 'rev-parse', '--show-toplevel'], cwd=/home/rgpa18/DFA, universal_newlines=False, shell=None, istream=None)
+2022-10-17 15:48:07,485 - /home/rgpa18/.local/lib/python3.9/site-packages/urllib3/connectionpool.py[line:228] - DEBUG: Starting new HTTP connection (1): localhost:8080
+2022-10-17 15:48:07,489 - /home/rgpa18/.local/lib/python3.9/site-packages/urllib3/connectionpool.py[line:456] - DEBUG: http://localhost:8080 "POST /graphql HTTP/1.1" 200 484
+2022-10-17 15:48:07,491 - /home/rgpa18/.local/lib/python3.9/site-packages/urllib3/connectionpool.py[line:228] - DEBUG: Starting new HTTP connection (1): localhost:8080
+2022-10-17 15:48:07,493 - /home/rgpa18/.local/lib/python3.9/site-packages/urllib3/connectionpool.py[line:456] - DEBUG: http://localhost:8080 "POST /graphql HTTP/1.1" 200 332
+2022-10-17 15:48:07,499 - /home/rgpa18/.local/lib/python3.9/site-packages/git/cmd.py[line:870] - DEBUG: Popen(['git', 'cat-file', '--batch-check'], cwd=/home/rgpa18/DFA, universal_newlines=False, shell=None, istream=<valid stream>)

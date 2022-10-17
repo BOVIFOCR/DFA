@@ -1,12 +1,14 @@
 from dataset import AlignedDataset
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, SubsetRandomSampler
 from torch import nn
 from model import FaceModel
 from options import opt
 import torchvision.utils as vutils
 import wandb
 import os
+import numpy as np
 import torch
+from tqdm import tqdm
 from statistics import PADMeter
 import logging
 from tensorboardX import SummaryWriter
@@ -28,6 +30,9 @@ writer = SummaryWriter(log_dir=run_dir)
 
 wandb.init(project="DFA_fork")
 
+def polarize(x, threshold=0.1):
+    return x.masked_fill_(x > threshold, 1)
+
 if __name__ == '__main__':
     best_res = 101
     train_batch_size = opt.batch_size
@@ -43,26 +48,29 @@ if __name__ == '__main__':
     ])
 
     transform_depth = T.Compose([
-        T.ToPILImage(),
-        T.Resize((256,256)),
+        T.ToPILImage(mode="L"),
+        T.Resize((256,256)), # another resize will be applied afterwards
+        # T.Resize((32,32)),
         T.ToTensor(),
+        # T.ConvertImageDtype(torch.float32),
         T.Lambda(lambda x: polarize(x)),
     ])
-    train_dataset = CASIAFASDDataset(os.path.join("/home/raul/image_datasets/casia-new/data/"),
+    train_dataset = CASIAFASDDataset(os.path.join("/home/rgpa18/image_datasets/casia-new/data/"),
                                      "train", transform=transform_src,
                                      depth_transform=transform_depth,
-                                     # nodepth_path=os.path.join(
-                                        # DATA, "casia-new/data/attack_depth.png")
+                                     nodepth_path=os.path.join(
+                                         "/home/rgpa18/image_datasets/casia-new/data/attack_depth.png")
                                      )
-    test_dataset = CASIAFASDDataset(os.path.join("/home/raul/image_datasets/casia-new/data/"),
+    test_dataset = CASIAFASDDataset(os.path.join("/home/rgpa18/image_datasets/casia-new/data/"),
                                      "test", transform=transform_src,
                                      depth_transform=transform_depth,
-                                     # nodepth_path=os.path.join(
-                                        # DATA, "casia-new/data/attack_depth.png")
+                                     nodepth_path=os.path.join(
+                                         "/home/rgpa18/image_datasets/casia-new/data/attack_depth.png")
                                      )
     dataset_sz = len(train_dataset)
     indices = list(range(dataset_sz))
     split = int(np.floor(.2 * dataset_sz))
+    shuffle = True
     if shuffle:
         np.random.seed(143)
         np.random.shuffle(indices)
@@ -73,9 +81,7 @@ if __name__ == '__main__':
                                    sampler=train_sampler, num_workers=8)
     dev_data_loader = DataLoader(train_dataset, batch_size=test_batch_size,
                                  sampler=val_sampler, num_workers=8) # using val as dev
-    test_data-loader = DataLoader(test_dataset, batch_size=test_batch_size, num_workers=8)
-
-    # TODO: report results on wandb
+    test_data_loader = DataLoader(test_dataset, batch_size=test_batch_size, num_workers=8)
 
     """
     test_data_loader = DataLoader(AlignedDataset(test_file_list,isTrain = False), batch_size=test_batch_size,
@@ -88,12 +94,12 @@ if __name__ == '__main__':
                                     shuffle = True,num_workers=8)
                                     """
 
-    wandb.watch(model)
+    # wandb.watch(model)
     writer.iter = 0
-    for e in range(opt.epoch):
+    for e in tqdm(range(opt.epoch), desc="Epochs", unit="epochs"):
         model.train()
         pad_meter_train = PADMeter()
-        for i, data in enumerate(train_data_loader):
+        for i, data in tqdm(enumerate(train_data_loader), desc="Batches", unit="batches"):
             model.set_input(data)
             model.optimize_parameters()
             class_output = nn.functional.softmax(model.output, dim=1)
@@ -110,11 +116,12 @@ if __name__ == '__main__':
                 img_save_dir = os.path.join(opt.checkpoints_dir, opt.name, "res")
                 if not os.path.exists(img_save_dir):
                     os.makedirs(img_save_dir)
-                logging.info(model.get_current_losses())
-                logging.info('HTER {pad_meter.hter:.4f} EER {pad_meter.eer:.4f} ACC {pad_meter.accuracy:.4f}'.format(
-                    pad_meter=pad_meter_train))
-                vutils.save_image(ret['fake_B'], "%s/epoch_%d_fake.png" % (img_save_dir, e), normalize=True)
-                vutils.save_image(ret['real_B'], "%s/epoch_%d_real.png" % (img_save_dir, e), normalize=True)
+                wandb.log(model.get_current_losses())
+                wandb.log({"HTER_train": pad_meter_train.hter, "EER_train": pad_meter_train.eer, "ACC_train": pad_meter_train.accuracy})
+                #print('HTER {pad_meter.hter:.4f} EER {pad_meter.eer:.4f} ACC {pad_meter.accuracy:.4f}'.format(
+                #     pad_meter=pad_meter_train))
+                # vutils.save_image(ret['fake_B'], "%s/epoch_%d_fake.png" % (img_save_dir, e), normalize=True)
+                # vutils.save_image(ret['real_B'], "%s/epoch_%d_real.png" % (img_save_dir, e), normalize=True)
 
 
         if e%1==0:
@@ -127,9 +134,9 @@ if __name__ == '__main__':
 
             pad_meter.get_hter_apcer_etal_at_thr(pad_dev_mater.threshold)
             pad_meter.get_accuracy(pad_dev_mater.threshold)
-            logging.info("epoch %d"%e)
-            logging.info('HTER {pad_meter.hter:.4f} EER {pad_meter.eer:.4f} ACC {pad_meter.accuracy:.4f}'.format(
-                pad_meter=pad_meter))
+            wandb.log({"HTER": pad_meter.hter, "EER": pad_meter.eer, "ACC": pad_meter.accuracy})
+            # print('HTER {pad_meter.hter:.4f} EER {pad_meter.eer:.4f} ACC {pad_meter.accuracy:.4f}'.format(
+            #     pad_meter=pad_meter))
             is_best = pad_meter.hter <= best_res
             best_res = min(pad_meter.hter, best_res)
             if is_best:
