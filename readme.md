@@ -1,3 +1,6 @@
+# Intro
+DFA fork for testing (and comparison) of our own, with our own datasets and structures
+
 # Usage
 ## Main Dependencies 
 
