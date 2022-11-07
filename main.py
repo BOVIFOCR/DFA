@@ -1,18 +1,15 @@
 from torch.utils.data import DataLoader
-from torch import nn
 from model import FaceModel
 from options import opt
-import os
 import math
 from tqdm import tqdm
-from tensorboardX import SummaryWriter
-from test import eval_model
+from torch.utils.tensorboard import SummaryWriter
+from epoch import run_one_epoch
 
 # our own datasets
 from liveness_datasets.datasets.casia_fasd import CASIAFASDDataset
 from liveness_datasets import transforms as T
 from liveness_datasets import utils as utils
-from liveness_datasets.meter import PADMeter
 
 ds_dir = "/home/rgpa18/image_datasets"
 nodepth_path = f"{ds_dir}/casia-new/data/attack_depth.png"
@@ -26,11 +23,14 @@ model = FaceModel(opt, isTrain=True, input_nc=3)
 
 # dataset setup
 train_ds = CASIAFASDDataset(f"{ds_dir}/casia-new/data/",
-                            "train", transform=T.t_src,
-                            depth_transform=T.t_depth,
+                            "train", trs=T.t_src, trs_depth=T.t_depth,
+                            trs_fake_depth=T.t_fake_depth,
+                            trs_label=T.t_label,
                             nodepth_path=nodepth_path)
 val_ds = CASIAFASDDataset(f"{ds_dir}/casia-new/data/", "test",
-                          transform=T.t_src, depth_transform=T.t_depth,
+                          trs=T.t_src, trs_depth=T.t_depth,
+                          trs_fake_depth=T.t_fake_depth,
+                          trs_label=T.t_label,
                           nodepth_path=nodepth_path)
 train_sampler, dev_sampler = utils.split_dataset(train_ds)
 train_ldr = DataLoader(train_ds, batch_size=train_batch_size,

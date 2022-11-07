@@ -3,6 +3,7 @@ from torch import nn
 from tqdm import tqdm
 from liveness_datasets.meter import PADMeter
 from liveness_datasets import utils
+from torchvision import transforms as T
 
 
 def batch_report(meter, model, name, show_grid=False):
@@ -17,8 +18,14 @@ def batch_report(meter, model, name, show_grid=False):
         }
     if show_grid:
         lim = min(10, len(model.real_A))
-        grid = utils.grid_from_batch(model.real_A[:lim], model.fake_B[:lim],
-                                     model.real_B[:lim])
+        res32 = T.Resize((32, 32))
+        real_A = res32(model.real_A[:lim])
+        fake_B = model.fake_B[:lim].repeat(1, 3, 1, 1)
+        real_B = model.real_B[:lim].repeat(1, 3, 1, 1)
+        print(f"real_A: {real_A.shape}")
+        print(f"fake_B: {fake_B.shape}")
+        print(f"real_B: {real_B.shape}")
+        grid = utils.grid_from_batch(real_A, fake_B, real_B)
         title = f"{name}/examples"
         report["grid"]["title"] = title
         report["grid"]["image"] = grid
@@ -54,8 +61,8 @@ def run_one_epoch(epoch, model, ldr, ds_size, mode, writer):
                          class_output.cpu().data.numpy())
             losses = model.get_current_losses()
             loss_dict['C'] += losses['C']
-            loss_dict['D'] += losses['D']
-            loss_dict['G'] += losses['G']
+            loss_dict['D'] += losses['D_real'] + losses['D_fake']
+            loss_dict['G'] += losses['G_GAN'] + losses['G_L1']
             if is_train and i % 10 == 9:
                 meter.full_update()
                 show_grid = epoch % 10 == 9
