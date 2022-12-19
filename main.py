@@ -8,12 +8,13 @@ from epoch import run_one_epoch
 
 # our own datasets
 from liveness_datasets.datasets.casia_fasd import CASIAFASDDataset
-from liveness_datasets import transforms as T
 from liveness_datasets import utils as utils
+import liveness_datasets.transforms as T
 
 ds_dir = "/home/rgpa18/image_datasets"
 nodepth_path = f"{ds_dir}/casia-new/data/attack_depth.png"
-writer = SummaryWriter()
+writer = SummaryWriter(log_dir=(None if opt.run_name is None
+                                else f"runs/{opt.run_name}")) # TODO opt.run_name
 
 best_res = 101
 train_batch_size = opt.batch_size
@@ -22,15 +23,15 @@ test_batch_size = opt.batch_size
 model = FaceModel(opt, isTrain=True, input_nc=3)
 
 # dataset setup
+trs_img, trs_label = T.get_augment(False)
+empty_trs = T.get_empty()
 train_ds = CASIAFASDDataset(f"{ds_dir}/casia-new/data/",
-                            "train", trs=T.t_src, trs_depth=T.t_depth,
-                            trs_fake_depth=T.t_fake_depth,
-                            trs_label=T.t_label,
+                            "train", trs=trs_img, trs_label=trs_label,
+                            res=(256,256), res_depth=(32,32),
                             nodepth_path=nodepth_path)
-val_ds = CASIAFASDDataset(f"{ds_dir}/casia-new/data/", "test",
-                          trs=T.t_src, trs_depth=T.t_depth,
-                          trs_fake_depth=T.t_fake_depth,
-                          trs_label=T.t_label,
+val_ds = CASIAFASDDataset(f"{ds_dir}/casia-new/data/",
+                          "test", trs=empty_trs, trs_label=trs_label,
+                          res=(256,256), res_depth=(32,32),
                           nodepth_path=nodepth_path)
 train_sampler, dev_sampler = utils.split_dataset(train_ds)
 train_ldr = DataLoader(train_ds, batch_size=train_batch_size,

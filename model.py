@@ -61,13 +61,12 @@ class FaceModel(nn.Module):
 
     def set_input(self, input):
         face = input[0]
-        depth = input[2]  # .repeat(1, 3, 1, 1)
+        depth = input[1]  # .repeat(1, 3, 1, 1)
+        self.real_A = face.to(self.device)
         res32 = T.Resize((32, 32))
-        res256 = T.Resize((256, 256))
-        self.real_A = res256(face).to(self.device)
         self.real_A_32 = res32(face).to(self.device)
-        self.real_B = res32(depth).to(self.device)
-        self.label = input[4].long().to(self.device)
+        self.real_B = depth.to(self.device)
+        self.label = input[2].long().to(self.device)
         self.image_path = "/dev/null"
         """
         self.real_A = input['A'].to(self.device)
