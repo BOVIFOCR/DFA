@@ -22,9 +22,6 @@ def batch_report(meter, model, name, show_grid=False):
         real_A = res32(model.real_A[:lim])
         fake_B = model.fake_B[:lim].repeat(1, 3, 1, 1)
         real_B = model.real_B[:lim].repeat(1, 3, 1, 1)
-        print(f"real_A: {real_A.shape}")
-        print(f"fake_B: {fake_B.shape}")
-        print(f"real_B: {real_B.shape}")
         grid = utils.grid_from_batch(real_A, fake_B, real_B)
         title = f"{name}/examples"
         report["grid"]["title"] = title

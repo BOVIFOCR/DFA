@@ -22,6 +22,8 @@ parser.add_argument('--w_cls', type=int, default=1, help='weight of cls loss')
 parser.add_argument('--w_L1', type=int, default=100, help='weight of L1 loss')
 parser.add_argument('--w_gan', type=int, default=1, help='weight of gan loss')
 
+parser.add_argument('--noaugment', action="store_true", help="don't apply augmentation")
+
 # training parameters
 parser.add_argument('--lr', type=float, default=0.00003, help='initial learning rate for adam')
 parser.add_argument('--beta1', type=float, default=0.5, help='momentum term of adam')

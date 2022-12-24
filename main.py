@@ -21,8 +21,13 @@ test_batch_size = opt.batch_size
 model = FaceModel(opt, isTrain=True, input_nc=3)
 
 # dataset setup
-trs_img, trs_label = T.get_augment(False)
-empty_trs = T.get_empty()
+trs_img, trs_label, empty_trs = (None,)*3
+if opt.noaugment:
+    trs_img, trs_label = T.get_transforms(False)
+    empty_trs = trs_img
+else:
+    trs_img, trs_label = T.get_augment(False)
+    empty_trs = T.get_empty()
 
 casia_dir = os.path.join(opt.data_dir, "casia-new/data/")
 replay_dir = os.path.join(opt.data_dir, "replay-new/data/")
@@ -31,23 +36,23 @@ if opt.protocol == "intra-casia-fasd":
     protocol = protocols.IntraCASIAFASDProtocol(
         root_dir=casia_dir, trs=trs_img, trs_label=trs_label,
         trs_test=empty_trs, trs_label_test=trs_label, res=(256, 256),
-        res_depth=(256, 256), join_train_and_val=True)
+        res_depth=(32, 32), join_train_and_val=True)
 elif opt.protocol == "intra-replay-attack":
     protocol = protocols.IntraReplayAttackProtocol(
         root_dir=replay_dir, trs=trs_img, trs_label=trs_label,
         trs_test=empty_trs, trs_label_test=trs_label, res=(256, 256),
-        res_depth=(256, 256), join_train_and_val=True)
+        res_depth=(32, 32), join_train_and_val=True)
 elif opt.protocol == "cross-casiafasd-replayattack":
     protocol = protocols.CrossCASIAFASDReplayAttackProtocol(
         from_casia=True, casia_root_dir=casia_dir, replay_root_dir=replay_dir,
         trs=trs_img, trs_label=trs_label, trs_test=empty_trs,
-        trs_label_test=trs_label, res=(256, 256), res_depth=(256, 256),
+        trs_label_test=trs_label, res=(256, 256), res_depth=(32, 32),
         join_train_and_val=True)
 elif opt.protocol == "cross-replayattack-casiafasd":
     protocol = protocols.CrossCASIAFASDReplayAttackProtocol(
         from_casia=False, casia_root_dir=casia_dir, replay_root_dir=replay_dir,
         trs=trs_img, trs_label=trs_label, trs_test=empty_trs,
-        trs_label_test=trs_label, res=(256, 256), res_depth=(256, 256),
+        trs_label_test=trs_label, res=(256, 256), res_depth=(32, 32),
         join_train_and_val=True)
 
 train_ds, train_sampler = protocol.train

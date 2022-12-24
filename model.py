@@ -60,8 +60,8 @@ class FaceModel(nn.Module):
                 lr=opt.lr, betas=(opt.beta1, 0.999), weight_decay=0.01)
 
     def set_input(self, input):
-        face = input[0]
-        depth = input[1]  # .repeat(1, 3, 1, 1)
+        face = input[0].float()
+        depth = input[1].float()  # .repeat(1, 3, 1, 1)
         self.real_A = face.to(self.device)
         res32 = T.Resize((32, 32))
         self.real_A_32 = res32(face).to(self.device)
