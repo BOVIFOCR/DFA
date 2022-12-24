@@ -1,8 +1,8 @@
 import torch
+import utils
 from torch import nn
 from tqdm import tqdm
 from liveness_datasets.meter import PADMeter
-from liveness_datasets import utils
 from torchvision import transforms as T
 
 

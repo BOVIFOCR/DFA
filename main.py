@@ -2,19 +2,17 @@ from torch.utils.data import DataLoader
 from model import FaceModel
 from options import opt
 import math
+import os
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 from epoch import run_one_epoch
 
 # our own datasets
-from liveness_datasets.datasets.casia_fasd import CASIAFASDDataset
-from liveness_datasets import utils as utils
+from liveness_datasets import protocols
 import liveness_datasets.transforms as T
 
-ds_dir = "/home/rgpa18/image_datasets"
-nodepth_path = f"{ds_dir}/casia-new/data/attack_depth.png"
-writer = SummaryWriter(log_dir=(None if opt.run_name is None
-                                else f"runs/{opt.run_name}")) # TODO opt.run_name
+writer = SummaryWriter(log_dir=(None if opt.name is None
+                                else f"runs/{opt.name}"))
 
 best_res = 101
 train_batch_size = opt.batch_size
@@ -25,20 +23,43 @@ model = FaceModel(opt, isTrain=True, input_nc=3)
 # dataset setup
 trs_img, trs_label = T.get_augment(False)
 empty_trs = T.get_empty()
-train_ds = CASIAFASDDataset(f"{ds_dir}/casia-new/data/",
-                            "train", trs=trs_img, trs_label=trs_label,
-                            res=(256,256), res_depth=(32,32),
-                            nodepth_path=nodepth_path)
-val_ds = CASIAFASDDataset(f"{ds_dir}/casia-new/data/",
-                          "test", trs=empty_trs, trs_label=trs_label,
-                          res=(256,256), res_depth=(32,32),
-                          nodepth_path=nodepth_path)
-train_sampler, dev_sampler = utils.split_dataset(train_ds)
+
+casia_dir = os.path.join(opt.data_dir, "casia-new/data/")
+replay_dir = os.path.join(opt.data_dir, "replay-new/data/")
+
+if opt.protocol == "intra-casia-fasd":
+    protocol = protocols.IntraCASIAFASDProtocol(
+        root_dir=casia_dir, trs=trs_img, trs_label=trs_label,
+        trs_test=empty_trs, trs_label_test=trs_label, res=(256, 256),
+        res_depth=(256, 256), join_train_and_val=True)
+elif opt.protocol == "intra-replay-attack":
+    protocol = protocols.IntraReplayAttackProtocol(
+        root_dir=replay_dir, trs=trs_img, trs_label=trs_label,
+        trs_test=empty_trs, trs_label_test=trs_label, res=(256, 256),
+        res_depth=(256, 256), join_train_and_val=True)
+elif opt.protocol == "cross-casiafasd-replayattack":
+    protocol = protocols.CrossCASIAFASDReplayAttackProtocol(
+        from_casia=True, casia_root_dir=casia_dir, replay_root_dir=replay_dir,
+        trs=trs_img, trs_label=trs_label, trs_test=empty_trs,
+        trs_label_test=trs_label, res=(256, 256), res_depth=(256, 256),
+        join_train_and_val=True)
+elif opt.protocol == "cross-replayattack-casiafasd":
+    protocol = protocols.CrossCASIAFASDReplayAttackProtocol(
+        from_casia=False, casia_root_dir=casia_dir, replay_root_dir=replay_dir,
+        trs=trs_img, trs_label=trs_label, trs_test=empty_trs,
+        trs_label_test=trs_label, res=(256, 256), res_depth=(256, 256),
+        join_train_and_val=True)
+
+train_ds, train_sampler = protocol.train
+dev_ds, dev_sampler = protocol.val
+val_ds, val_sampler = protocol.test
+
 train_ldr = DataLoader(train_ds, batch_size=train_batch_size,
                        sampler=train_sampler, num_workers=8)
-dev_ldr = DataLoader(train_ds, batch_size=test_batch_size,
-                     sampler=dev_sampler, num_workers=8)
-val_ldr = DataLoader(val_ds, batch_size=test_batch_size, num_workers=8)
+dev_ldr = DataLoader(train_ds, batch_size=test_batch_size, sampler=dev_sampler,
+                     num_workers=8)
+val_ldr = DataLoader(val_ds, sampler=val_sampler, batch_size=test_batch_size,
+                     num_workers=8)
 
 for epoch in tqdm(range(opt.epoch), desc="Epochs", unit="epochs"):
     train_size = math.ceil(.8 * len(train_ds))

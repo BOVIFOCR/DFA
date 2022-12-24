@@ -1,6 +1,8 @@
 import argparse
 parser = argparse.ArgumentParser()
 
+parser.add_argument("--protocol", metavar="protocol_name", type=str,
+                    required=True, help="Protocol name")
 parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
 parser.add_argument('--batch_size', type=int, default=8, help='batch size')
 parser.add_argument('--epoch', type=int, default=30, help='epoch')
@@ -8,6 +10,10 @@ parser.add_argument('--gpu_ids', type=str, default='0,1', help='gpu ids: e.g. 0 
 
 parser.add_argument('--name', type=str, default='tmp',
                     help='name of the experiment. It decides where to store samples and models')
+
+parser.add_argument("--data_dir", type=str,
+                    default="/home/rgpa18/image_datasets/",
+                    help="Any short comment to describe this run")
                     
 parser.add_argument('--model', type=str, default='model3', help='model in ablation experiment,model1 model2 model3')
 
@@ -15,9 +21,6 @@ parser.add_argument('--data_balance', dest="data_balance", action='store_true', 
 parser.add_argument('--w_cls', type=int, default=1, help='weight of cls loss')
 parser.add_argument('--w_L1', type=int, default=100, help='weight of L1 loss')
 parser.add_argument('--w_gan', type=int, default=1, help='weight of gan loss')
-
-parser.add_argument('--run_name', type=str,
-                    help="run name in tb")
 
 # training parameters
 parser.add_argument('--lr', type=float, default=0.00003, help='initial learning rate for adam')
